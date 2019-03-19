@@ -40,6 +40,7 @@ OS_PROJECT_NAME = "OS_PROJECT_NAME"
 OS_USER_DOMAIN_NAME = "OS_USER_DOMAIN_NAME"
 OS_TENANT_ID = "OS_TENANT_ID"
 OS_TENANT_NAME = "OS_TENANT_NAME"
+OS_PROJECT_DOMAIN_NAME="OS_PROJECT_DOMAIN_NAME"
 
 
 class OpenStackClientRegistry(object):
@@ -121,13 +122,14 @@ def _get_session_keystone_v3():
     from keystoneauth1 import session
     from keystoneclient.v3 import client
 
-    user, password, auth_uri, project_name, project_id, user_domain_name = _get_connection_info('3')
+    user, password, auth_uri, project_name, project_id, user_domain_name, project_domain_name = _get_connection_info('3')
 
     auth = v3.Password(auth_url=auth_uri,
                     username=user,
                     password=password,
-                    project_id=project_id,
-                    user_domain_name=user_domain_name
+                    project_name=project_name,
+                    user_domain_name=user_domain_name,
+                    project_domain_name=project_domain_name
                     )
     envs = [user, password, auth_uri, project_name, project_id, user_domain_name]
     msg = "AUTH with user ({e[0]}), password (****), auth_uri ({e[2]}), " \
@@ -135,6 +137,7 @@ def _get_session_keystone_v3():
           "and user_domain_name ({e[5]}).".format(e=envs)
     LOG.info(msg)
     sess = session.Session(auth=auth)
+    # print sess
 
     return sess;
 def _get_connection_info(keystone_ver):
@@ -149,9 +152,10 @@ def _get_connection_info(keystone_ver):
     project_name = os.environ.get(OS_PROJECT_NAME)
     project_id = os.environ.get(OS_PROJECT_ID)
     user_domain_name = os.environ.get(OS_USER_DOMAIN_NAME)
-    _check_conn_variables(user, password, auth_uri, project_name, project_id, user_domain_name, keystone_ver)
-    return user, password, auth_uri, project_name, project_id, user_domain_name
-def _check_conn_variables(user, password, auth_uri, project_name, project_id, user_domain_name, keystone_ver):
+    project_domain_name = os.environ.get(OS_PROJECT_DOMAIN_NAME)
+    _check_conn_variables(user, password, auth_uri, project_name, project_id, user_domain_name, project_domain_name, keystone_ver)
+    return user, password, auth_uri, project_name, project_id, user_domain_name, project_domain_name
+def _check_conn_variables(user, password, auth_uri, project_name, project_id, user_domain_name, project_domain_name, keystone_ver):
     """
     Check that the environment variables have been found.  Without connection
     variables to the openstack testbed it is impossible to build a landscape
@@ -164,13 +168,13 @@ def _check_conn_variables(user, password, auth_uri, project_name, project_id, us
     :param user_domain_name: User domain name.
     """
 
-    envs = [OS_USERNAME, OS_PASSWORD, OS_PROJECT_NAME, OS_PROJECT_ID, OS_AUTH_URL, OS_USER_DOMAIN_NAME]
+    envs = [OS_USERNAME, OS_PASSWORD, OS_AUTH_URL, OS_PROJECT_NAME, OS_PROJECT_ID, OS_USER_DOMAIN_NAME, OS_PROJECT_DOMAIN_NAME]
     msg = ""
     if keystone_ver == '3':
-        #print [user, password, auth_uri, project_name, project_id, user_domain_name]
-        if not user or not password or not auth_uri or not project_name or not project_id or not user_domain_name:
-            msg = "Environment variables {e[0]}, {e[1]}, {e[2]}, {e[3]}, {e[4]} " \
-                  "and {e[5]} are required".format(e=envs)
+        #print [user, password, auth_uri, project_name, project_id, user_domain_name, project_domain_name]
+        if not user or not password or not auth_uri or not project_name or not project_id or not user_domain_name or not project_domain_name:
+            msg = "Environment variables {e[0]}, {e[1]}, {e[2]}, {e[3]}, {e[4]}, {e[5]} " \
+                  "and {e[6]} are required".format(e=envs)
     else:
         #print [user, password, auth_uri, project_name]
         if not user or not password or not auth_uri or not project_name:
